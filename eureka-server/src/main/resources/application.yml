@@ -1,0 +1,25 @@
+spring:
+    application:
+        name: eureka-server
+    config:
+        import:
+            - optional:file:../.env[.properties]
+            - optional:configserver:${CONFIG_SERVER_URL:http://localhost:9999} ## si centralisation des configuration dans le config-server
+
+management:
+    endpoints:
+        web:
+            exposure:
+                include: health, info, refresh
+
+eureka:
+    instance:
+        hostname: eureka-server
+    client:
+        register-with-eureka: false
+        fetch-registry: false
+    server:
+        enable-self-preservation: false
+
+server:
+    port: ${EUREKA_PORT}

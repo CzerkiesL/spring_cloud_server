@@ -1,0 +1,65 @@
+# Compiled class files
+target/
+!**/src/main/**/target/
+!**/src/test/**/target/
+
+# IDE
+.idea/
+*.iml
+*.ipr
+*.iws
+.project
+.classpath
+.factorypath
+.settings/
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+logs/
+
+# Temp files
+*.tmp
+*.bak
+*.orig
+
+# Maven
+pom.xml.tag
+pom.xml.releaseBackup
+pom.xml.versionsBackup
+pom.xml.next
+release.properties
+dependency-reduced-pom.xml
+buildNumber.properties
+.mvn/timing.properties
+.mvn/wrapper/maven-wrapper.jar
+**/META-INF/
+
+# Spring Boot
+spring-boot-devtools.properties
+
+# Environment variables / secrets
+.env
+.env.*
+!.env.example
+!.env.template
+
+# Jar / war générés (au cas où)
+*.jar
+*.war
+*.ear
+
+# Autres secrets courants
+*.pem
+*.key
+*.p12
+*.pfx
+secrets/
+credentials/

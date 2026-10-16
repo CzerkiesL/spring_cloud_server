@@ -1,0 +1,20 @@
+# État de tous les conteneurs
+docker compose ps
+
+# Logs de tous les services
+docker compose logs -f
+
+# Logs ciblés
+docker compose logs -f ${nom_du_service}
+
+# Redémarrer uniquement un service
+docker compose restart ${nom_du_service}
+
+# Reconstruire uniquement un service
+docker compose up -d --build ${nom_du_service}
+
+# Arrêter l'infrastructure sans supprimer les volumes
+docker compose down
+
+# Réinitialisation complète : attention, supprime les données RabbitMQ et Prometheus
+docker compose down -v

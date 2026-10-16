@@ -1,0 +1,141 @@
+name: microservice-server
+services:
+
+##################################################################### SERVICE BASE
+
+    config-server:
+        build:
+            context: .
+            dockerfile: ./config-server/Dockerfile
+        env_file: ./.env
+        container_name: ${CONFIG_CONTAINER_NAME}
+        ports: 
+            - 127.0.0.1:${CONFIG_SERVER_PORT}:${CONFIG_SERVER_PORT}
+        environment:
+            # RabbitMQ
+            SPRING_RABBITMQ_HOST: ${RABBITMQ_CONTAINER_NAME}
+            SPRING_RABBITMQ_PORT: ${RABBITMQ_AMQP_PORT}
+            SPRING_RABBITMQ_USERNAME: ${RABBITMQ_USERNAME}
+            SPRING_RABBITMQ_PASSWORD: ${RABBITMQ_PASSWORD}
+        healthcheck:
+            test: ["CMD", "wget", "--spider", "-q", "http://localhost:${CONFIG_SERVER_PORT}/actuator/health"]
+            interval: 10s
+            timeout: 5s
+            retries: 10
+            start_period: 20s
+        restart: unless-stopped
+        networks:
+          - backend-network
+        depends_on:
+            rabbitmq:
+                condition: service_healthy
+      
+    eureka-server:
+        build:
+            context: .
+            dockerfile: ./eureka-server/Dockerfile
+        env_file: ./.env
+        container_name: ${EUREKA_CONTAINER_NAME}
+        ports:
+            - 127.0.0.1:${EUREKA_PORT}:${EUREKA_PORT}
+        environment:
+            # config-server
+            CONFIG_SERVER_URL: http://${CONFIG_CONTAINER_NAME}:${CONFIG_SERVER_PORT}
+        healthcheck:
+            test: ["CMD", "wget", "--spider", "-q", "http://localhost:${EUREKA_PORT}/actuator/health"]
+            interval: 10s
+            timeout: 5s
+            retries: 10
+            start_period: 30s
+        restart: unless-stopped
+        networks:
+            - backend-network
+        depends_on:
+            config-server:
+                condition: service_healthy
+    
+    gateway-server:
+        build:
+            context: .
+            dockerfile: ./gateway-server/Dockerfile
+        env_file: ./.env
+        container_name: ${GATEWAY_CONTAINER_NAME}
+        ports:
+            - ${GATEWAY_PORT}:${GATEWAY_PORT}
+        environment:
+            # config-server
+            CONFIG_SERVER_URL: http://${CONFIG_CONTAINER_NAME}:${CONFIG_SERVER_PORT}
+            # eureka-server
+            EUREKA_SERVER_URL: http://${EUREKA_CONTAINER_NAME}:${EUREKA_PORT}/eureka/
+            # RabbitMq
+            SPRING_RABBITMQ_HOST: ${RABBITMQ_CONTAINER_NAME}
+            SPRING_RABBITMQ_PORT: ${RABBITMQ_AMQP_PORT}
+            SPRING_RABBITMQ_USERNAME: ${RABBITMQ_USERNAME}
+            SPRING_RABBITMQ_PASSWORD: ${RABBITMQ_PASSWORD}
+        healthcheck:
+            test: ["CMD", "wget", "--spider", "-q", "http://localhost:${GATEWAY_PORT}/actuator/health"]
+            interval: 10s
+            timeout: 5s
+            retries: 10
+            start_period: 30s
+        restart: unless-stopped
+        networks:
+            - backend-network
+            - frontend-network
+        depends_on:
+            config-server:
+                condition: service_healthy
+            eureka-server:
+                condition: service_healthy
+
+##################################################################### SERVICE GLOBAUX
+
+    prometheus:
+        image: prom/prometheus:latest
+        env_file: ./.env
+        container_name: ${PROMETHEUS_CONTAINER_NAME}
+        ports:
+          - 127.0.0.1:${PROMETHEUS_PORT}:${PROMETHEUS_PORT}
+        volumes:
+          - ./monitoring/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+          - prometheus-data:/prometheus
+        restart: unless-stopped
+        networks:
+          - backend-network
+          - frontend-network
+        depends_on:
+            gateway-server:
+                condition: service_healthy
+    
+    rabbitmq:
+        image: rabbitmq:4-management
+        env_file: ./.env
+        container_name: ${RABBITMQ_CONTAINER_NAME}
+        ports:
+            - 127.0.0.1:${RABBITMQ_AMQP_PORT}:${RABBITMQ_AMQP_PORT}
+            - 127.0.0.1:${RABBITMQ_MANAGEMENT_PORT}:${RABBITMQ_MANAGEMENT_PORT}
+        environment:
+            RABBITMQ_DEFAULT_USER: ${RABBITMQ_USERNAME}
+            RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD}
+        volumes:
+            - rabbitmq-data:/var/lib/rabbitmq
+        healthcheck:
+            test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+            interval: 10s
+            timeout: 5s
+            retries: 10
+            start_period: 20s
+        restart: unless-stopped
+        networks:
+            - backend-network
+
+networks:
+    backend-network:
+        driver: bridge
+    frontend-network:
+        driver: bridge
+        internal: false
+        
+volumes:
+    prometheus-data:
+    rabbitmq-data:

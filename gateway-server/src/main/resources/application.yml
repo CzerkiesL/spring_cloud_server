@@ -1,0 +1,84 @@
+spring:
+    application:
+        name: gateway-server
+    config:
+        import:
+            - optional:file:../.env[.properties]
+            - optional:configserver:${CONFIG_SERVER_URL:http://localhost:9999}
+    rabbitmq:
+        host: ${RABBITMQ_HOST}
+        port: ${RABBITMQ_AMQP_PORT}
+        username: ${RABBITMQ_USERNAME}
+        password: ${RABBITMQ_PASSWORD}
+    cloud:
+        gateway:
+            server:
+                webflux:
+                    discovery:
+                        locator:
+                            enabled: false
+
+                    routes:
+                        - id: id_serveur
+                          uri: lb://NOM_ENREGISTRER_SUR_EUREKA
+                          predicates:
+                              - Path=/path/vers/server/**
+                          filters:
+                              - StripPrefix=3 ## morceaux du path a ignorer ( path 1 / vers 2 / server 3 )
+                              - name: CircuitBreaker
+                                args:
+                                    name: nomDuCircuitBreaker
+                                    fallbackUri: forward:/fallback/nomServer ## controller present dans le serveur
+
+                    globalcors:
+                        cors-configurations:
+                            "[/**]":
+                                allowed-origins: ${CLIENT_URL}
+                                allowed-methods:
+                                    - GET
+                                    - POST
+                                    - PUT
+                                    - PATCH
+                                    - DELETE
+                                    - OPTIONS
+                                allowed-headers:
+                                    - "*"
+                                exposed-headers:
+                                    - Authorization
+                                allow-credentials: true
+                                max-age: 3600
+
+resilience4j:
+    circuitbreaker:
+        configs:
+            default:
+                slidingWindowSize: 10
+                permittedNumberOfCallsInHalfOpenState: 2
+                failureRateThreshold: 50
+                waitDurationInOpenState: 10000
+
+management:
+    endpoints:
+        web:
+            exposure:
+                include: health, info, metrics, prometheus, gateway
+    endpoint:
+        gateway:
+            enabled: true
+
+eureka:
+    client:
+        register-with-eureka: true
+        fetch-registry: true
+        service-url:
+            defaultZone: ${EUREKA_SERVER_URL}
+    instance:
+        prefer-ip-address: true
+
+jwt:
+    access-secret: ${ACCESS_JWT_SECRET}
+    issuer: ${JWT_ISSUER}
+    audience: ${JWT_AUDIENCE}
+
+server:
+    port: ${GATEWAY_PORT}

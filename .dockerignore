@@ -1,0 +1,12 @@
+**/target/
+**/.idea/
+**/.vscode/
+**/.git/
+**/.mvn/
+.git
+.idea
+*.iml
+*.log
+.env
+README.md
+.docker_info

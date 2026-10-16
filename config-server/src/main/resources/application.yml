@@ -1,0 +1,40 @@
+spring:
+    application:
+        name: config-server
+    config:
+        import: optional:file:../.env[.properties]
+    profiles:
+        active: native
+#        active: git
+    cloud:
+        config:
+            server:
+                native: 
+                    search-locations: classpath:/config
+#                    search-locations: file:///C:/chemin/vers/dossier/contenant/la/config
+#                git:
+#                    uri: ${GIT_URL} ## url du repo Git
+#                    username: ${GIT_USERNAME} ## obligatoire si le repo est en private
+#                    password: ${GIT_TOKEN} ## obligatoire si le repo est en private
+#                    default-label: ${GIT_BRANCH}
+#                    clone-on-start: true
+
+rabbitmq:
+    host: ${RABBITMQ_HOST}
+    port: ${RABBITMQ_AMQP_PORT}
+    username: ${RABBITMQ_USERNAME}
+    password: ${RABBITMQ_PASSWORD}
+
+management:
+    endpoints:
+        web:
+            exposure:
+                include: 
+                    - health
+                    - info
+                    - refresh
+                    - bus-refresh
+                    - monitor
+
+server:
+    port: ${CONFIG_SERVER_PORT}

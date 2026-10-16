@@ -1,0 +1,19 @@
+# commande lancement de prometheus dans docker :
+#    docker run --rm --name prometheus -p 9090:9090 -v "${PWD}/prometheus.yml:/etc/prometheus/prometheus.yml" prom/prometheus
+
+global:
+    scrape_interval: 15s
+    scrape_timeout: 10s
+    evaluation_interval: 15s
+
+scrape_configs:
+    - job_name: prometheus
+      static_configs:
+          - targets:
+                - localhost:9090
+
+    - job_name: gateway-server
+      metrics_path: /actuator/prometheus
+      static_configs:
+          - targets:
+                - gateway-server:8080
